@@ -97,6 +97,7 @@ const translations = {
     btn_suivant: "Suivant",
     page: "Page",
     chargement: "Chargement…",
+    stats_today: "Aujourd'hui",
     // Toasts
     toast_profil_maj: "Profil mis à jour",
     toast_recette_supprimee: "Recette supprimée",
@@ -247,6 +248,7 @@ const translations = {
     btn_suivant: "Next",
     page: "Page",
     chargement: "Loading…",
+    stats_today: "Today",
     // Toasts
     toast_profil_maj: "Profile updated",
     toast_recette_supprimee: "Recipe deleted",

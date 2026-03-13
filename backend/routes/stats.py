@@ -9,7 +9,11 @@ stats_bp = Blueprint("stats", __name__)
 
 def get_period_bounds(periode):
     today = date.today()
-    if periode == 'semaine':
+    if periode == 'today':
+        from datetime import date
+        start = date.today()
+        end   = date.today()
+    elif periode == 'semaine':
         start = today - timedelta(days=today.weekday())  # lundi
     else:  # mois
         start = today.replace(day=1)

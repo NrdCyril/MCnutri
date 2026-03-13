@@ -309,6 +309,7 @@
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px">
         <div class="section-title" style="margin-bottom:0; border:none; padding:0" data-i18n="stats_nutrition_title">Statistiques nutritionnelles</div>
         <div style="display:flex; gap:8px">
+          <button class="btn btn-ghost" id="btnToday" onclick="switchPeriode('today')" style="padding:8px 16px; font-size:13px" data-i18n="stats_today">Aujourd'hui</button>
           <button class="btn btn-ghost" id="btnSemaine" onclick="switchPeriode('semaine')" style="padding:8px 16px; font-size:13px" data-i18n="stats_semaine">Cette semaine</button>
           <button class="btn btn-ghost" id="btnMois" onclick="switchPeriode('mois')" style="padding:8px 16px; font-size:13px" data-i18n="stats_mois">Ce mois</button>
         </div>
@@ -708,7 +709,7 @@ async function generateRecette() {
 
 // Variables stats
 let statsChartInstance = null;
-let currentPeriode = 'semaine';
+let currentPeriode = 'today';
 
 // ── SANTÉ : IMC + CALORIES ──
 async function loadSante() {
@@ -766,9 +767,9 @@ async function loadStats(periode = 'semaine') {
   currentPeriode = periode;
 
   // Boutons actifs
+  document.getElementById("btnToday").className    = periode === 'today'   ? 'btn btn-primary' : 'btn btn-ghost';
   document.getElementById("btnSemaine").className = periode === 'semaine' ? 'btn btn-primary' : 'btn btn-ghost';
   document.getElementById("btnMois").className    = periode === 'mois'    ? 'btn btn-primary' : 'btn btn-ghost';
-  document.getElementById("btnSemaine").style.cssText = periode === 'semaine' ? 'padding:8px 16px;font-size:13px' : 'padding:8px 16px;font-size:13px';
 
   try {
     const res  = await apiFetch(`https://mcnutri.onrender.com/stats/nutrition?periode=${periode}`);
