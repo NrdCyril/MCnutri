@@ -575,7 +575,7 @@ function logout() {
 
 async function loadProfil() {
   try {
-    const res  = await apiFetch("http://127.0.0.1:5000/me");
+    const res  = await apiFetch("https://mcnutri.onrender.com/me");
     const data = await res.json();
     document.getElementById("profil_name").value   = data.name   || "";
     document.getElementById("profil_age").value    = data.age    || "";
@@ -596,7 +596,7 @@ async function loadProfil() {
 
 async function updateProfil() {
   try {
-    const res = await apiFetch("http://127.0.0.1:5000/me", {
+    const res = await apiFetch("https://mcnutri.onrender.com/me", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -614,7 +614,7 @@ async function updateProfil() {
 
 async function changeLang(lang) {
   setLang(lang);
-  await apiFetch("http://127.0.0.1:5000/me", {
+  await apiFetch("https://mcnutri.onrender.com/me", {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ langue: lang })
@@ -628,7 +628,7 @@ async function getRecettes(page = 1) {
   const container = document.getElementById("recettesContainer");
   container.innerHTML = `<div class="empty"><span class="spinner"></span> ${t('chargement')}</div>`;
   try {
-    const res = await apiFetch(`http://127.0.0.1:5000/recettes?page=${page}&per_page=6`, {
+    const res = await apiFetch(`https://mcnutri.onrender.com/recettes?page=${page}&per_page=6`, {
       headers: { "Content-Type": "application/json" }
     });
     const data = await res.json();
@@ -677,7 +677,7 @@ async function getRecettes(page = 1) {
 async function deleteRecette(id) {
   if (!confirm(t('confirm_supprimer_recette'))) return;
   try {
-    const res = await apiFetch(`http://127.0.0.1:5000/recettes/${id}`, { method: "DELETE" });
+    const res = await apiFetch(`https://mcnutri.onrender.com/recettes/${id}`, { method: "DELETE" });
     if (res.ok) { toast(t('toast_recette_supprimee')); getRecettes(currentPage); }
     else toast(t('toast_erreur_supprimer'), "error");
   } catch(e) { toast(t('toast_erreur_reseau'), "error"); }
@@ -688,7 +688,7 @@ async function generateRecette() {
   btn.innerHTML = `<span class="spinner"></span> ${t('generating')}`;
   btn.disabled = true;
   try {
-    const res = await apiFetch("http://127.0.0.1:5000/generate_recette", {
+    const res = await apiFetch("https://mcnutri.onrender.com/generate_recette", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ingredients: document.getElementById("ingredients").value })
@@ -713,7 +713,7 @@ let currentPeriode = 'semaine';
 // ── SANTÉ : IMC + CALORIES ──
 async function loadSante() {
   try {
-    const res  = await apiFetch("http://127.0.0.1:5000/sante");
+    const res  = await apiFetch("https://mcnutri.onrender.com/sante");
     const data = await res.json();
 
     if (data.imc) {
@@ -753,7 +753,7 @@ async function loadSante() {
 // ── STATS NUTRITION ──
 async function ajouterAuxStats(recetteId) {
   try {
-    const res = await apiFetch(`http://127.0.0.1:5000/recettes/${recetteId}/ajouter-stats`, {
+    const res = await apiFetch(`https://mcnutri.onrender.com/recettes/${recetteId}/ajouter-stats`, {
       method: "POST",
       headers: {}
     });
@@ -771,7 +771,7 @@ async function loadStats(periode = 'semaine') {
   document.getElementById("btnSemaine").style.cssText = periode === 'semaine' ? 'padding:8px 16px;font-size:13px' : 'padding:8px 16px;font-size:13px';
 
   try {
-    const res  = await apiFetch(`http://127.0.0.1:5000/stats/nutrition?periode=${periode}`);
+    const res  = await apiFetch(`https://mcnutri.onrender.com/stats/nutrition?periode=${periode}`);
     const data = await res.json();
 
     // Moyennes
@@ -832,7 +832,7 @@ function switchPeriode(periode) {
 // ── REPAS MANUELS ──
 async function loadRepas(periode) {
   try {
-    const res    = await apiFetch(`http://127.0.0.1:5000/repas?periode=${periode}`);
+    const res    = await apiFetch(`https://mcnutri.onrender.com/repas?periode=${periode}`);
     const repas  = await res.json();
     const container = document.getElementById("repasContainer");
     if (repas.length === 0) {
@@ -861,7 +861,7 @@ async function addRepas() {
   const nom = document.getElementById("repas_nom").value.trim();
   if (!nom) { showInlineMsg("repasMsg", t('erreur_nom_obligatoire'), "error"); return; }
   try {
-    const res = await apiFetch("http://127.0.0.1:5000/repas", {
+    const res = await apiFetch("https://mcnutri.onrender.com/repas", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -884,7 +884,7 @@ async function addRepas() {
 async function deleteRepas(id) {
   if (!confirm(t('confirm_supprimer_recette'))) return;
   try {
-    const res = await apiFetch(`http://127.0.0.1:5000/repas/${id}`, { method: "DELETE" });
+    const res = await apiFetch(`https://mcnutri.onrender.com/repas/${id}`, { method: "DELETE" });
     if (res.ok) { toast(t('toast_recette_supprimee')); loadStats(currentPeriode); }
   } catch(e) {}
 }
@@ -893,7 +893,7 @@ async function loadUsers() {
   const tbody = document.getElementById("usersTableBody");
   tbody.innerHTML = `<tr><td colspan="4" style="color:var(--muted)"><span class="spinner"></span> ${t('chargement')}</td></tr>`;
   try {
-    const res = await apiFetch("http://127.0.0.1:5000/admin/users");
+    const res = await apiFetch("https://mcnutri.onrender.com/admin/users");
     const users = await res.json();
     tbody.innerHTML = "";
     users.forEach(u => {
@@ -917,7 +917,7 @@ async function loadUsers() {
 async function deleteUser(id, name) {
   if (!confirm(`${t('confirm_supprimer_user')} ${name} ?`)) return;
   try {
-    const res = await apiFetch(`http://127.0.0.1:5000/admin/users/${id}`, { method: "DELETE" });
+    const res = await apiFetch(`https://mcnutri.onrender.com/admin/users/${id}`, { method: "DELETE" });
     const data = await res.json();
     if (res.ok) { toast(`${t('toast_compte_supprime')} ${name}`); loadUsers(); }
     else toast(data.error || t('toast_erreur_supprimer'), "error");
@@ -929,7 +929,7 @@ async function updateRole() {
   const role   = document.getElementById("targetRole").value;
   if (!userId) { showInlineMsg("roleMsg", t('erreur_id_user'), "error"); return; }
   try {
-    const res = await apiFetch(`http://127.0.0.1:5000/admin/users/${userId}/role`, {
+    const res = await apiFetch(`https://mcnutri.onrender.com/admin/users/${userId}/role`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ role })
@@ -944,7 +944,7 @@ async function loadAliments() {
   const tbody = document.getElementById("alimentsTableBody");
   tbody.innerHTML = `<tr><td colspan="7" style="color:var(--muted)"><span class="spinner"></span> ${t('chargement')}</td></tr>`;
   try {
-    const res = await apiFetch("http://127.0.0.1:5000/aliments");
+    const res = await apiFetch("https://mcnutri.onrender.com/aliments");
     const aliments = await res.json();
     tbody.innerHTML = "";
     aliments.forEach(a => {
@@ -972,7 +972,7 @@ function markDirty(id) { document.getElementById(`save_${id}`).style.display = "
 
 async function saveAliment(id) {
   try {
-    const res = await apiFetch(`http://127.0.0.1:5000/aliments/${id}`, {
+    const res = await apiFetch(`https://mcnutri.onrender.com/aliments/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -991,7 +991,7 @@ async function saveAliment(id) {
 async function deleteAliment(id, name) {
   if (!confirm(`${t('confirm_supprimer_aliment')} "${name}" ?`)) return;
   try {
-    const res = await apiFetch(`http://127.0.0.1:5000/aliments/${id}`, { method: "DELETE" });
+    const res = await apiFetch(`https://mcnutri.onrender.com/aliments/${id}`, { method: "DELETE" });
     if (res.ok) { toast(`"${name}" ${t('toast_supprime')}`); loadAliments(); }
     else toast(t('toast_erreur_supprimer'), "error");
   } catch(e) { toast(t('toast_erreur_reseau'), "error"); }
@@ -1001,7 +1001,7 @@ async function addAliment() {
   const name = document.getElementById("new_name").value.trim();
   if (!name) { showInlineMsg("alimentMsg", t('erreur_nom_obligatoire'), "error"); return; }
   try {
-    const res = await apiFetch("http://127.0.0.1:5000/aliments", {
+    const res = await apiFetch("https://mcnutri.onrender.com/aliments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -1024,7 +1024,7 @@ let weightChartInstance = null;
 
 async function loadMesures() {
   try {
-    const res = await apiFetch("http://127.0.0.1:5000/mesures");
+    const res = await apiFetch("https://mcnutri.onrender.com/mesures");
     const mesures = await res.json();
     renderWeightChart(mesures);
   } catch(e) { console.error(e); }
@@ -1068,7 +1068,7 @@ async function addMesure() {
   const poidsVal = document.getElementById("mesure_poids").value;
   if (!dateVal || !poidsVal) { showInlineMsg("mesureMsg", t('erreur_date_poids'), "error"); return; }
   try {
-    const res = await apiFetch("http://127.0.0.1:5000/mesures", {
+    const res = await apiFetch("https://mcnutri.onrender.com/mesures", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ date: dateVal, poids: parseFloat(poidsVal), masse_grasse: parseFloat(document.getElementById("mesure_mg").value) || null })
@@ -1088,7 +1088,7 @@ let chatInterval = null;
 async function loadNotifications() {
   if (!localStorage.getItem("token")) return;
   try {
-    const res  = await apiFetch("http://127.0.0.1:5000/notifications");
+    const res  = await apiFetch("https://mcnutri.onrender.com/notifications");
     const data = await res.json();
     const badge = document.getElementById("notifBadge");
     if (data.total > 0) { badge.textContent = data.total; badge.style.display = "inline-block"; }
@@ -1101,7 +1101,7 @@ async function searchUsers() {
   const container = document.getElementById("searchResults");
   if (q.length < 2) { container.innerHTML = ""; return; }
   try {
-    const res   = await apiFetch(`http://127.0.0.1:5000/users/search?q=${encodeURIComponent(q)}`);
+    const res   = await apiFetch(`https://mcnutri.onrender.com/users/search?q=${encodeURIComponent(q)}`);
     const users = await res.json();
     container.innerHTML = "";
     if (users.length === 0) { container.innerHTML = `<p style="color:var(--muted);font-size:13px">${t('aucun_resultat')}</p>`; return; }
@@ -1121,7 +1121,7 @@ async function searchUsers() {
 
 async function envoyerDemande(receveurId) {
   try {
-    const res = await apiFetch("http://127.0.0.1:5000/amis/demande", {
+    const res = await apiFetch("https://mcnutri.onrender.com/amis/demande", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ receveur_id: receveurId })
@@ -1134,7 +1134,7 @@ async function envoyerDemande(receveurId) {
 
 async function loadDemandes() {
   try {
-    const res      = await apiFetch("http://127.0.0.1:5000/amis/demandes");
+    const res      = await apiFetch("https://mcnutri.onrender.com/amis/demandes");
     const demandes = await res.json();
     const container = document.getElementById("demandesContainer");
     container.innerHTML = "";
@@ -1155,7 +1155,7 @@ async function loadDemandes() {
 
 async function repondre(amitieId, statut) {
   try {
-    const res = await apiFetch(`http://127.0.0.1:5000/amis/demande/${amitieId}`, {
+    const res = await apiFetch(`https://mcnutri.onrender.com/amis/demande/${amitieId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ statut })
@@ -1169,7 +1169,7 @@ async function repondre(amitieId, statut) {
 
 async function loadAmis() {
   try {
-    const res  = await apiFetch("http://127.0.0.1:5000/amis");
+    const res  = await apiFetch("https://mcnutri.onrender.com/amis");
     const amis = await res.json();
     const container = document.getElementById("amisContainer");
     container.innerHTML = "";
@@ -1194,14 +1194,14 @@ async function loadAmis() {
 async function supprimerAmi(amitieId) {
   if (!confirm(t('confirm_supprimer_ami'))) return;
   try {
-    const res = await apiFetch(`http://127.0.0.1:5000/amis/${amitieId}`, { method: "DELETE" });
+    const res = await apiFetch(`https://mcnutri.onrender.com/amis/${amitieId}`, { method: "DELETE" });
     if (res.ok) { toast(t('toast_ami_supprime')); loadAmis(); }
   } catch(e) {}
 }
 
 async function loadRecettesRecues() {
   try {
-    const res      = await apiFetch("http://127.0.0.1:5000/recettes/recues");
+    const res      = await apiFetch("https://mcnutri.onrender.com/recettes/recues");
     const recettes = await res.json();
     const container = document.getElementById("recettesRecuesContainer");
     container.innerHTML = "";
@@ -1218,7 +1218,7 @@ async function loadRecettesRecues() {
     });
 
     // Marquer comme lues après affichage
-    await apiFetch("http://127.0.0.1:5000/recettes/recues/lues", {
+    await apiFetch("https://mcnutri.onrender.com/recettes/recues/lues", {
       method: "PATCH",
       headers: {}
     });
@@ -1231,7 +1231,7 @@ let recetteAPartager = null;
 async function partagerRecette(recetteId, recetteTitle) {
   recetteAPartager = recetteId;
   document.getElementById("modaleRecetteTitle").textContent = recetteTitle;
-  const amisRes = await apiFetch("http://127.0.0.1:5000/amis");
+  const amisRes = await apiFetch("https://mcnutri.onrender.com/amis");
   if (!amisRes) return;
   const amis = await amisRes.json();
   const liste = document.getElementById("modaleAmisList");
@@ -1252,7 +1252,7 @@ async function partagerRecette(recetteId, recetteTitle) {
 }
 
 async function confirmerPartage(amiId, amiName) {
-  const res = await apiFetch("http://127.0.0.1:5000/recettes/partager", {
+  const res = await apiFetch("https://mcnutri.onrender.com/recettes/partager", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ recette_id: recetteAPartager, receveur_id: amiId })
@@ -1285,7 +1285,7 @@ function closeChat() {
 async function loadMessages() {
   if (!chatAmiId) return;
   try {
-    const res      = await apiFetch(`http://127.0.0.1:5000/messages/${chatAmiId}`);
+    const res      = await apiFetch(`https://mcnutri.onrender.com/messages/${chatAmiId}`);
     const messages = await res.json();
     const container = document.getElementById("messagesContainer");
     const myId      = parseInt(JSON.parse(atob(token.split('.')[1])).sub);
@@ -1306,7 +1306,7 @@ async function envoyerMessage() {
   const contenu = document.getElementById("messageInput").value.trim();
   if (!contenu || !chatAmiId) return;
   try {
-    await apiFetch("http://127.0.0.1:5000/messages", {
+    await apiFetch("https://mcnutri.onrender.com/messages", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ receveur_id: chatAmiId, contenu })
