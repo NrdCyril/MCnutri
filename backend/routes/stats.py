@@ -10,14 +10,15 @@ stats_bp = Blueprint("stats", __name__)
 def get_period_bounds(periode):
     today = date.today()
     if periode == 'today':
-        from datetime import date
-        start = date.today()
-        end   = date.today()
+        start = today
+        end   = today
     elif periode == 'semaine':
-        start = today - timedelta(days=today.weekday())  # lundi
+        start = today - timedelta(days=today.weekday())
+        end   = today
     else:  # mois
         start = today.replace(day=1)
-    return start, today
+        end   = today
+    return start, end
 
 # ── STATS NUTRITIONNELLES ──────────────────────────────────────────
 @stats_bp.route('/stats/nutrition', methods=['GET'])
@@ -71,7 +72,7 @@ def stats_nutrition():
         cal_repas = sum(rep.calories or 0 for rep in repas_liste if rep.date == jour)
         jours.append({
             "date":     jour.isoformat(),
-            "label":    jour.strftime("%a %d" if periode == "semaine" else "%d/%m"),
+            "label": jour.strftime("%H:%M") if periode == "today" else jour.strftime("%a %d" if periode == "semaine" else "%d/%m"),
             "calories": round(cal_recettes + cal_repas, 1)
         })
 
