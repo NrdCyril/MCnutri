@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MCNutri — Dashboard</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --black: #0a0a0a; --surface: #111111; --surface2: #181818; --surface3: #1f1f1f;
+      --border: #252525; --border2: #2f2f2f; --accent: #c8f135;
+      --accent-dim: rgba(200,241,53,0.1); --accent-glow: rgba(200,241,53,0.2);
+      --text: #f0f0f0; --muted: #666; --muted2: #444;
+      --danger: #ff5555; --danger-dim: rgba(255,85,85,0.1);
+    }
+    body { background: var(--black); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background-image: linear-gradient(rgba(200,241,53,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(200,241,53,0.025) 1px, transparent 1px);
+      background-size: 60px 60px; pointer-events: none; z-index: 0;
+    }
+    .layout { position: relative; z-index: 1; display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+    .sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 32px 24px; display: flex; flex-direction: column; gap: 40px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+    .logo { font-family: 'Bebas Neue', sans-serif; font-size: 36px; letter-spacing: 3px; color: var(--accent); line-height: 1; }
+    .logo span { display: block; font-family: 'DM Sans', sans-serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); font-weight: 400; margin-top: 4px; }
+    .nav { display: flex; flex-direction: column; gap: 4px; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 500; color: var(--muted); transition: all 0.2s; border: 1px solid transparent; }
+    .nav-item:hover { background: var(--surface2); color: var(--text); }
+    .nav-item.active { background: var(--accent-dim); color: var(--accent); border-color: rgba(200,241,53,0.15); }
+    .nav-icon { font-size: 18px; width: 24px; text-align: center; }
+    .sidebar-footer { margin-top: auto; padding-top: 24px; border-top: 1px solid var(--border); }
+    .user-chip { display: flex; align-items: center; gap: 12px; }
+    .avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--accent-dim); border: 1px solid rgba(200,241,53,0.2); display: flex; align-items: center; justify-content: center; font-family: 'Bebas Neue', sans-serif; font-size: 16px; color: var(--accent); flex-shrink: 0; }
+    .user-info { flex: 1; min-width: 0; }
+    .user-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-role { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+    .logout-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 18px; padding: 4px; transition: color 0.2s; }
+    .logout-btn:hover { color: var(--danger); }
+    .main { padding: 40px; overflow-y: auto; }
+    .panel { display: none; animation: fadeIn 0.3s ease; }
+    .panel.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .page-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 32px; }
+    .page-title { font-family: 'Bebas Neue', sans-serif; font-size: 42px; letter-spacing: 2px; line-height: 1; }
+    .page-sub { font-size: 13px; color: var(--muted); margin-top: 6px; }
+    .btn { padding: 12px 24px; border-radius: 8px; border: none; cursor: pointer; font-family: 'Bebas Neue', sans-serif; font-size: 15px; letter-spacing: 1.5px; transition: all 0.2s; }
+    .btn-primary { background: var(--accent); color: var(--black); }
+    .btn-primary:hover { background: #d4f545; box-shadow: 0 6px 20px rgba(200,241,53,0.2); transform: translateY(-1px); }
+    .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border2); }
+    .btn-ghost:hover { background: var(--surface3); }
+    .btn-danger { background: var(--danger-dim); color: var(--danger); border: 1px solid rgba(255,85,85,0.2); padding: 8px 16px; font-size: 13px; }
+    .btn-danger:hover { background: rgba(255,85,85,0.2); }
+    .recettes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+    .recette-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; transition: border-color 0.2s, transform 0.2s; animation: fadeIn 0.4s ease both; }
+    .recette-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+    .recette-card h3 { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1px; margin-bottom: 10px; }
+    .recette-instructions { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 18px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .nutrition-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 16px; }
+    .nutrition-item { background: var(--surface2); border-radius: 8px; padding: 10px 12px; }
+    .nutrition-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+    .nutrition-value { font-size: 16px; font-weight: 500; color: var(--text); margin-top: 2px; }
+    .nutrition-value span { font-size: 11px; color: var(--muted); font-weight: 400; }
+    .calories-item { grid-column: span 2; background: var(--accent-dim); border: 1px solid rgba(200,241,53,0.1); }
+    .calories-item .nutrition-value { color: var(--accent); font-size: 20px; }
+    .generate-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; max-width: 600px; }
+    .form-field { margin-bottom: 20px; }
+    .form-field label { display: block; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+    input, select { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 13px 16px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 14px; transition: border-color 0.2s, box-shadow 0.2s; outline: none; }
+    input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(200,241,53,0.08); }
+    input::placeholder { color: var(--muted2); }
+    .result-box { background: var(--surface2); border: 1px solid rgba(200,241,53,0.15); border-radius: 12px; padding: 24px; margin-top: 24px; display: none; animation: fadeIn 0.3s ease; }
+    .result-box h3 { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 1px; color: var(--accent); margin-bottom: 12px; }
+    .profil-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 600px; }
+    .users-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    .users-table th { text-align: left; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); padding: 12px 16px; border-bottom: 1px solid var(--border); }
+    .users-table td { padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 14px; }
+    .users-table tr:last-child td { border-bottom: none; }
+    .users-table tr:hover td { background: var(--surface2); }
+    .role-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; font-weight: 500; }
+    .role-dev     { background: rgba(200,241,53,0.15); color: var(--accent); }
+    .role-admin   { background: rgba(100,180,255,0.15); color: #64b4ff; }
+    .role-premium { background: rgba(255,180,50,0.15);  color: #ffb432; }
+    .role-normal  { background: var(--surface3); color: var(--muted); }
+    .update-role-box { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 28px; max-width: 560px; margin-top: 32px; }
+    .update-role-box h3 { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 1px; margin-bottom: 20px; }
+    .inline-row { display: flex; gap: 12px; align-items: flex-end; }
+    .inline-row .form-field { flex: 1; margin-bottom: 0; }
+    select option { background: var(--surface2); }
+    #toast { position: fixed; bottom: 32px; right: 32px; padding: 14px 22px; border-radius: 10px; font-size: 14px; font-weight: 500; z-index: 999; opacity: 0; transform: translateY(10px); transition: all 0.3s ease; pointer-events: none; }
+    #toast.show { opacity: 1; transform: translateY(0); }
+    #toast.success { background: var(--accent); color: var(--black); }
+    #toast.error   { background: var(--danger); color: #fff; }
+    .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+    .empty-icon { font-size: 48px; margin-bottom: 16px; }
+    .empty p { font-size: 14px; line-height: 1.7; }
+    .spinner { width: 20px; height: 20px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; vertical-align: middle; margin-right: 8px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .section-title { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+    .msg-inline { margin-top: 16px; padding: 12px 16px; border-radius: 8px; font-size: 13px; display: none; }
+    .msg-inline.success { background: var(--accent-dim); color: var(--accent); }
+    .msg-inline.error   { background: var(--danger-dim); color: var(--danger); }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+  <div class="logo">MCNutri <span data-i18n="logo_sub">Nutrition & Performance</span></div>
+  <nav class="nav">
+    <div class="nav-item active" onclick="showPanel('recettes', this)"><span class="nav-icon">🥗</span> <span data-i18n="nav_recettes">Mes recettes</span></div>
+    <div class="nav-item" onclick="showPanel('stats', this)">
+    <span class="nav-icon">📊</span>
+    <span data-i18n="nav_stats">Stats & Santé</span>
+    </div>
+    <div class="nav-item" onclick="showPanel('generate', this)"><span class="nav-icon">✨</span> <span data-i18n="nav_generate">Générer IA</span></div>
+    <div class="nav-item" onclick="showPanel('profil', this)"><span class="nav-icon">👤</span> <span data-i18n="nav_profil">Mon profil</span></div>
+    <div class="nav-item" onclick="showPanel('social', this)">
+      <span class="nav-icon">👥</span> <span data-i18n="nav_social">Social</span>
+      <span id="notifBadge" style="display:none; background:var(--accent); color:var(--black); border-radius:20px; font-size:11px; padding:2px 7px; margin-left:auto; font-family:'Bebas Neue',sans-serif;">0</span>
+    </div>
+    
+    <div class="nav-item" id="adminNav" style="display:none" onclick="showPanel('admin', this)"><span class="nav-icon">⚙️</span> <span data-i18n="nav_admin">Administration</span></div>
+    <div class="nav-item" id="alimentsNav" style="display:none" onclick="showPanel('aliments', this)"><span class="nav-icon">🥦</span> <span data-i18n="nav_aliments">Aliments</span></div>
+  </nav>
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="avatar" id="avatarInitial">?</div>
+        <div class="user-info">
+          <div class="user-name" id="sidebarName">—</div>
+          <div class="user-role" id="sidebarRole">—</div>
+        </div>
+        <button class="logout-btn" onclick="logout()" title="Déconnexion">↩</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <!-- RECETTES -->
+    <div id="panelRecettes" class="panel active">
+      <div class="page-header">
+        <div>
+          <div class="page-title" data-i18n="recettes_title">Mes Recettes</div>
+          <div class="page-sub" data-i18n="recettes_sub">Votre historique nutritionnel</div>
+        </div>
+        <button class="btn btn-ghost" onclick="getRecettes()">↺ <span data-i18n="btn_rafraichir">Rafraîchir</span></button>
+      </div>
+      <div id="recettesContainer"><div class="empty"><div class="spinner"></div> <span data-i18n="chargement">Chargement…</span></div></div>
+    </div>
+
+    <!-- GENERATE -->
+    <div id="panelGenerate" class="panel">
+      <div class="page-header">
+        <div>
+          <div class="page-title" data-i18n="generate_title">Générer une Recette</div>
+          <div class="page-sub" data-i18n="generate_sub">Laissez l'IA créer votre recette fitness</div>
+        </div>
+      </div>
+      <div class="generate-box">
+        <div class="form-field">
+          <label data-i18n="generate_label">Ingrédients souhaités</label>
+          <input type="text" id="ingredients" data-i18n="generate_placeholder" placeholder="poulet, riz, brocoli…">
+        </div>
+        <button class="btn btn-primary" id="generateBtn" onclick="generateRecette()" data-i18n="generate_btn">Générer la recette</button>
+        <div id="resultBox" class="result-box">
+          <h3 id="titleIA"></h3>
+          <p style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:18px" id="instructionsIA"></p>
+          <div class="nutrition-grid">
+            <div class="nutrition-item calories-item"><div class="nutrition-label">Calories</div><div class="nutrition-value"><span id="caloriesIA"></span> <span>kcal</span></div></div>
+            <div class="nutrition-item"><div class="nutrition-label" data-i18n="label_proteines">Protéines</div><div class="nutrition-value"><span id="proteinesIA"></span> <span>g</span></div></div>
+            <div class="nutrition-item"><div class="nutrition-label" data-i18n="label_glucides">Glucides</div><div class="nutrition-value"><span id="glucidesIA"></span> <span>g</span></div></div>
+            <div class="nutrition-item"><div class="nutrition-label" data-i18n="label_lipides">Lipides</div><div class="nutrition-value"><span id="lipidesIA"></span> <span>g</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  <!-- MODALE PARTAGE -->
+  <div id="modalePartage" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:1000; align-items:center; justify-content:center;">
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:32px; width:100%; max-width:400px; margin:20px;">
+      <h3 style="font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:2px; margin-bottom:8px;" data-i18n="modale_partage_title">Partager la recette</h3>
+      <p id="modaleRecetteTitle" style="color:var(--muted); font-size:13px; margin-bottom:24px;"></p>
+      <div id="modaleAmisList" style="display:flex; flex-direction:column; gap:8px; max-height:300px; overflow-y:auto;"></div>
+      <button class="btn" onclick="fermerModalePartage()" style="margin-top:20px; background:var(--surface2); color:var(--text);" data-i18n="btn_annuler">Annuler</button>
+    </div>
+  </div>
+
+    <!-- SOCIAL -->
+  <div id="panelSocial" class="panel">
+    <div class="page-header">
+      <div>
+        <div class="page-title" data-i18n="social_title">Social</div>
+        <div class="page-sub" data-i18n="social_sub">Amis, messages et recettes partagées</div>
+      </div>
+    </div>
+    <div class="update-role-box" style="max-width:500px; margin-bottom:32px">
+      <h3 data-i18n="social_search">Ajouter un ami</h3>
+      <div style="display:flex; gap:12px">
+        <input type="text" id="searchUser" data-i18n="social_search_placeholder" placeholder="Rechercher par nom…" oninput="searchUsers()" style="flex:1">
+      </div>
+      <div id="searchResults" style="margin-top:12px"></div>
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; max-width:900px">
+      <div class="update-role-box">
+        <h3 data-i18n="social_demandes">Demandes reçues</h3>
+        <div id="demandesContainer" style="margin-top:16px">
+          <p style="color:var(--muted); font-size:13px" data-i18n="social_aucune_demande">Aucune demande en attente</p>
+        </div>
+      </div>
+      <div class="update-role-box">
+        <h3 data-i18n="social_amis">Mes amis</h3>
+        <div id="amisContainer" style="margin-top:16px">
+          <p style="color:var(--muted); font-size:13px" data-i18n="social_aucun_ami">Aucun ami pour l'instant</p>
+        </div>
+      </div>
+      <div class="update-role-box" style="grid-column:span 2">
+        <h3 data-i18n="social_recettes_recues">Recettes reçues</h3>
+        <div id="recettesRecuesContainer" style="margin-top:16px">
+          <p style="color:var(--muted); font-size:13px" data-i18n="social_aucune_recette">Aucune recette reçue</p>
+        </div>
+      </div>
+    </div>
+    <div id="chatBox" style="display:none; margin-top:32px; max-width:600px">
+      <div class="update-role-box">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px">
+          <h3><span data-i18n="chat_avec">Chat avec</span> <span id="chatAmiName"></span></h3>
+          <button class="btn btn-ghost" onclick="closeChat()" style="padding:6px 12px; font-size:12px">✕ <span data-i18n="btn_fermer">Fermer</span></button>
+        </div>
+        <div id="messagesContainer" style="height:300px; overflow-y:auto; background:var(--surface2); border-radius:8px; padding:16px; margin-bottom:12px; display:flex; flex-direction:column; gap:8px"></div>
+        <div style="display:flex; gap:8px">
+          <input type="text" id="messageInput" data-i18n="chat_placeholder" placeholder="Votre message…" style="flex:1" onkeydown="if(event.key==='Enter') envoyerMessage()">
+          <button class="btn btn-primary" onclick="envoyerMessage()" style="padding:12px 20px" data-i18n="btn_envoyer">Envoyer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS & SANTE -->
+  <div id="panelStats" class="panel">
+    <div class="page-header">
+      <div>
+        <div class="page-title" data-i18n="stats_title">Stats & Santé</div>
+        <div class="page-sub" data-i18n="stats_sub">Nutrition, IMC et besoins caloriques</div>
+      </div>
+    </div>
+
+    <!-- IMC + Calories (calculé auto depuis profil) -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; max-width:900px; margin-bottom:32px">
+
+      <!-- IMC -->
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:24px">
+        <div class="section-title" data-i18n="sante_imc_title">Indice de Masse Corporelle</div>
+        <div id="imcDisplay" style="text-align:center; padding:16px 0">
+          <div id="imcValeur" style="font-family:'Bebas Neue',sans-serif; font-size:64px; color:var(--accent); line-height:1">—</div>
+          <div id="imcCategorie" style="font-size:14px; color:var(--muted); margin-top:4px">—</div>
+        </div>
+        <!-- Barre IMC visuelle -->
+        <div style="margin-top:12px">
+          <div style="display:flex; height:8px; border-radius:4px; overflow:hidden; gap:2px">
+            <div style="flex:1; background:#64b4ff" title="< 18.5"></div>
+            <div style="flex:1.3; background:#c8f135" title="18.5–25"></div>
+            <div style="flex:1; background:#ffb432" title="25–30"></div>
+            <div style="flex:0.8; background:#ff7755" title="30–35"></div>
+            <div style="flex:0.8; background:#ff5555" title="> 35"></div>
+          </div>
+          <div style="display:flex; justify-content:space-between; font-size:10px; color:var(--muted); margin-top:4px">
+            <span>16</span><span>18.5</span><span>25</span><span>30</span><span>35</span><span>40</span>
+          </div>
+          <div style="position:relative; height:4px; margin-top:-18px">
+            <div id="imcCursor" style="position:absolute; width:10px; height:10px; background:var(--text); border-radius:50%; top:-3px; transform:translateX(-50%); display:none"></div>
+          </div>
+        </div>
+        <p id="imcManque" style="font-size:12px; color:var(--muted); margin-top:16px; display:none">
+          Renseignez votre poids et taille dans Mon Profil pour calculer l'IMC.
+        </p>
+      </div>
+
+      <!-- Besoins caloriques -->
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:24px">
+        <div class="section-title" data-i18n="sante_calories_title">Besoins caloriques / jour</div>
+        <div id="caloriesDisplay">
+          <div style="display:flex; flex-direction:column; gap:12px; margin-top:8px">
+            <div style="background:var(--surface2); border-radius:10px; padding:14px 16px">
+              <div style="font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--muted)" data-i18n="sante_maintenance">Maintien</div>
+              <div id="calMaintien" style="font-size:24px; font-family:'Bebas Neue',sans-serif; color:var(--text); margin-top:2px">— kcal</div>
+            </div>
+            <div style="background:var(--danger-dim); border:1px solid rgba(255,85,85,0.15); border-radius:10px; padding:14px 16px">
+              <div style="font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--danger)" data-i18n="sante_perte">Perte de poids <span style="opacity:0.6">(-20%)</span></div>
+              <div id="calPerte" style="font-size:24px; font-family:'Bebas Neue',sans-serif; color:var(--danger); margin-top:2px">— kcal</div>
+            </div>
+            <div style="background:var(--accent-dim); border:1px solid rgba(200,241,53,0.15); border-radius:10px; padding:14px 16px">
+              <div style="font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--accent)" data-i18n="sante_prise">Prise de masse <span style="opacity:0.6">(+15%)</span></div>
+              <div id="calPrise" style="font-size:24px; font-family:'Bebas Neue',sans-serif; color:var(--accent); margin-top:2px">— kcal</div>
+            </div>
+            <div style="background:var(--surface2); border:1px solid rgba(100,180,255,0.15); border-radius:10px; padding:14px 16px">
+              <div style="font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#64b4ff" data-i18n="sante_proteines">Protéines recommandées / jour</div>
+              <div id="protRecommandees" style="font-size:24px; font-family:'Bebas Neue',sans-serif; color:#64b4ff; margin-top:2px">— g</div>
+              <div style="font-size:11px; color:var(--muted); margin-top:4px">Pour un objectif fitness actif (1.6 – 2.2g / kg)</div>
+            </div>
+          </div>
+          <p id="caloriesManque" style="font-size:12px; color:var(--muted); margin-top:16px; display:none">
+            Renseignez votre poids, taille et âge dans Mon Profil pour calculer vos besoins.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Statistiques nutritionnelles -->
+    <div style="max-width:900px">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px">
+        <div class="section-title" style="margin-bottom:0; border:none; padding:0" data-i18n="stats_nutrition_title">Statistiques nutritionnelles</div>
+        <div style="display:flex; gap:8px">
+          <button class="btn btn-ghost" id="btnSemaine" onclick="switchPeriode('semaine')" style="padding:8px 16px; font-size:13px" data-i18n="stats_semaine">Cette semaine</button>
+          <button class="btn btn-ghost" id="btnMois" onclick="switchPeriode('mois')" style="padding:8px 16px; font-size:13px" data-i18n="stats_mois">Ce mois</button>
+        </div>
+      </div>
+
+      <!-- Totaux macros -->
+      <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:24px">
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; text-align:center">
+          <div style="font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--muted)">Calories moy./jour</div>
+          <div id="statCalMoy" style="font-size:28px; font-family:'Bebas Neue',sans-serif; color:var(--accent); margin-top:4px">—</div>
+          <div style="font-size:11px; color:var(--muted2)">kcal</div>
+        </div>
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; text-align:center">
+          <div style="font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--muted)" data-i18n="label_proteines">Protéines moy./jour</div>
+          <div id="statProtMoy" style="font-size:28px; font-family:'Bebas Neue',sans-serif; color:#64b4ff; margin-top:4px">—</div>
+          <div style="font-size:11px; color:var(--muted2)">g</div>
+        </div>
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; text-align:center">
+          <div style="font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--muted)" data-i18n="label_glucides">Glucides moy./jour</div>
+          <div id="statGlucMoy" style="font-size:28px; font-family:'Bebas Neue',sans-serif; color:#ffb432; margin-top:4px">—</div>
+          <div style="font-size:11px; color:var(--muted2)">g</div>
+        </div>
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px; text-align:center">
+          <div style="font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--muted)" data-i18n="label_lipides">Lipides moy./jour</div>
+          <div id="statLipMoy" style="font-size:28px; font-family:'Bebas Neue',sans-serif; color:#ff7755; margin-top:4px">—</div>
+          <div style="font-size:11px; color:var(--muted2)">g</div>
+        </div>
+      </div>
+
+      <!-- Graphique calories -->
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:24px; margin-bottom:24px">
+        <canvas id="statsChart" height="100"></canvas>
+      </div>
+
+      <!-- Sources -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:32px">
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px">
+          <div style="font-size:12px; color:var(--muted); margin-bottom:8px" data-i18n="stats_source_recettes">🥗 Depuis les recettes</div>
+          <div style="font-size:14px"><span id="statRecCal" style="color:var(--accent); font-family:'Bebas Neue',sans-serif; font-size:20px">0</span> kcal — <span id="statRecCount">0</span> <span data-i18n="recettes_count">recettes</span></div>
+        </div>
+        <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px">
+          <div style="font-size:12px; color:var(--muted); margin-bottom:8px" data-i18n="stats_source_repas">🍽 Depuis les repas manuels</div>
+          <div style="font-size:14px"><span id="statRepasCal" style="color:var(--accent); font-family:'Bebas Neue',sans-serif; font-size:20px">0</span> kcal — <span id="statRepasCount">0</span> <span data-i18n="stats_repas_count">repas</span></div>
+        </div>
+      </div>
+
+      <!-- Saisie repas manuels -->
+      <div class="update-role-box" style="max-width:900px">
+        <h3 data-i18n="stats_add_repas">Ajouter un repas manuel</h3>
+        <div style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr; gap:12px; align-items:flex-end; margin-top:16px">
+          <div class="form-field" style="margin:0"><label data-i18n="th_nom">Nom</label><input type="text" id="repas_nom" placeholder="Déjeuner…"></div>
+          <div class="form-field" style="margin:0"><label data-i18n="mesure_date">Date</label><input type="date" id="repas_date"></div>
+          <div class="form-field" style="margin:0"><label>Kcal</label><input type="number" id="repas_cal" placeholder="500"></div>
+          <div class="form-field" style="margin:0"><label>Prot.</label><input type="number" id="repas_prot" placeholder="30"></div>
+          <div class="form-field" style="margin:0"><label>Gluc.</label><input type="number" id="repas_gluc" placeholder="60"></div>
+          <div class="form-field" style="margin:0"><label>Lip.</label><input type="number" id="repas_lip" placeholder="15"></div>
+        </div>
+        <button class="btn btn-primary" onclick="addRepas()" style="margin-top:16px">+ <span data-i18n="mesure_btn">Enregistrer</span></button>
+        <div id="repasMsg" class="msg-inline"></div>
+      </div>
+
+      <!-- Liste repas manuels -->
+      <div style="margin-top:24px; max-width:900px">
+        <div class="section-title" data-i18n="stats_liste_repas">Repas enregistrés</div>
+        <div id="repasContainer">
+          <p style="color:var(--muted); font-size:13px" data-i18n="stats_aucun_repas">Aucun repas enregistré pour cette période.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- PROFIL -->
+  <div id="panelProfil" class="panel">
+    <div class="page-header">
+      <div>
+        <div class="page-title" data-i18n="profil_title">Mon Profil</div>
+        <div class="page-sub" data-i18n="profil_sub">Vos informations personnelles</div>
+      </div>
+    </div>
+    <div class="profil-grid">
+      <div class="form-field" style="grid-column:span 2">
+        <label data-i18n="profil_nom">Nom complet</label>
+        <input type="text" id="profil_name" placeholder="John Doe">
+      </div>
+      <div class="form-field">
+        <label data-i18n="profil_age">Âge</label>
+        <input type="number" id="profil_age" placeholder="25">
+      </div>
+      <div class="form-field">
+        <label data-i18n="profil_taille">Taille (cm)</label>
+        <input type="number" id="profil_taille" placeholder="175">
+      </div>
+      <div class="form-field">
+        <label data-i18n="profil_langue">Langue</label>
+        <select id="langue" onchange="changeLang(this.value)">
+          <option value="fr">🇫🇷 Français</option>
+          <option value="en">🇬🇧 English</option>
+        </select>
+      </div>
+      <div class="form-field" style="grid-column:span 2">
+        <label data-i18n="profil_poids">Poids (kg)</label>
+        <input type="number" id="profil_poids" placeholder="70">
+      </div>
+      <div class="form-field" style="grid-column:span 2">
+        <label data-i18n="profil_regime">Régime alimentaire</label>
+        <select id="profil_regime">
+          <option value="standard" data-i18n="regime_standard">Standard</option>
+          <option value="vegetarien" data-i18n="regime_vegetarien">Végétarien</option>
+          <option value="vegan" data-i18n="regime_vegan">Vegan</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="updateProfil()" style="margin-top:8px">💾 <span data-i18n="profil_save">Sauvegarder</span></button>
+    <div id="profilMsg" class="msg-inline"></div>
+
+    <hr style="border-color:var(--border); margin:32px 0">
+
+    <div class="page-title" style="font-size:28px; margin-bottom:6px" data-i18n="suivi_title">Suivi du poids</div>
+    <div class="page-sub" style="margin-bottom:24px" data-i18n="suivi_sub">Historique de vos mesures corporelles</div>
+
+    <div class="update-role-box" style="max-width:500px; margin-bottom:32px">
+      <h3 data-i18n="mesure_add">Ajouter une mesure</h3>
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; align-items:flex-end">
+        <div class="form-field" style="margin:0"><label data-i18n="mesure_date">Date</label><input type="date" id="mesure_date"></div>
+        <div class="form-field" style="margin:0"><label data-i18n="profil_poids">Poids (kg)</label><input type="number" step="0.1" id="mesure_poids" placeholder="70.5"></div>
+        <div class="form-field" style="margin:0"><label data-i18n="mesure_mg">Masse grasse %</label><input type="number" step="0.1" id="mesure_mg" placeholder="15.0"></div>
+      </div>
+      <button class="btn btn-primary" onclick="addMesure()" style="margin-top:16px">+ <span data-i18n="mesure_btn">Enregistrer</span></button>
+      <div id="mesureMsg" class="msg-inline"></div>
+    </div>
+
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:24px; max-width:800px">
+      <canvas id="weightChart" height="120"></canvas>
+    </div>
+  </div>
+
+  <!-- ADMIN -->
+  <div id="panelAdmin" class="panel">
+    <div class="page-header">
+      <div>
+        <div class="page-title" data-i18n="admin_title">Administration</div>
+        <div class="page-sub" data-i18n="admin_sub">Gestion des utilisateurs</div>
+      </div>
+      <button class="btn btn-ghost" onclick="loadUsers()">↺ <span data-i18n="btn_rafraichir">Rafraîchir</span></button>
+    </div>
+    <div class="section-title" data-i18n="admin_users">Utilisateurs</div>
+    <table class="users-table">
+      <thead><tr>
+        <th>ID</th>
+        <th data-i18n="th_nom">Nom</th>
+        <th data-i18n="th_role">Rôle</th>
+        <th data-i18n="th_action">Action</th>
+      </tr></thead>
+      <tbody id="usersTableBody"><tr><td colspan="3" style="color:var(--muted);padding:20px 16px" data-i18n="admin_click">Cliquez sur Rafraîchir pour charger…</td></tr></tbody>
+    </table>
+    <div class="update-role-box">
+      <h3 data-i18n="admin_modifier_role">Modifier le rôle</h3>
+      <div class="inline-row">
+        <div class="form-field"><label data-i18n="admin_id_user">ID utilisateur</label><input type="number" id="targetUserId" placeholder="Ex: 3"></div>
+        <div class="form-field"><label data-i18n="admin_nouveau_role">Nouveau rôle</label>
+          <select id="targetRole">
+            <option value="normal">Normal</option>
+            <option value="premium">Premium</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" onclick="updateRole()" style="margin-bottom:0;flex-shrink:0" data-i18n="btn_maj">Mettre à jour</button>
+      </div>
+      <div id="roleMsg" class="msg-inline"></div>
+    </div>
+  </div>
+
+  <!-- ALIMENTS ADMIN -->
+  <div id="panelAliments" class="panel">
+    <div class="page-header">
+      <div>
+        <div class="page-title" data-i18n="aliments_title">Gestion des Aliments</div>
+        <div class="page-sub" data-i18n="aliments_sub">Base nutritionnelle</div>
+      </div>
+      <button class="btn btn-ghost" onclick="loadAliments()">↺ <span data-i18n="btn_rafraichir">Rafraîchir</span></button>
+    </div>
+    <div class="update-role-box" style="margin-bottom:32px; max-width:700px">
+      <h3 data-i18n="aliments_add">Ajouter un aliment</h3>
+      <div style="display:grid; grid-template-columns:2fr 1fr 1fr 1fr 1fr; gap:12px; align-items:flex-end">
+        <div class="form-field" style="margin:0"><label data-i18n="th_nom">Nom</label><input type="text" id="new_name" placeholder="Poulet"></div>
+        <div class="form-field" style="margin:0"><label>Kcal</label><input type="number" id="new_cal" placeholder="165"></div>
+        <div class="form-field" style="margin:0"><label>Prot. (g)</label><input type="number" id="new_prot" placeholder="31"></div>
+        <div class="form-field" style="margin:0"><label>Gluc. (g)</label><input type="number" id="new_gluc" placeholder="0"></div>
+        <div class="form-field" style="margin:0"><label>Lip. (g)</label><input type="number" id="new_lip" placeholder="3.6"></div>
+      </div>
+      <button class="btn btn-primary" onclick="addAliment()" style="margin-top:16px">+ <span data-i18n="btn_ajouter">Ajouter</span></button>
+      <div id="alimentMsg" class="msg-inline"></div>
+    </div>
+    <div class="section-title" data-i18n="aliments_liste">Liste des aliments</div>
+    <table class="users-table">
+      <thead><tr>
+        <th>ID</th>
+        <th data-i18n="th_nom">Nom</th>
+        <th>Kcal</th><th>Prot.</th><th>Gluc.</th><th>Lip.</th>
+        <th data-i18n="th_action">Actions</th>
+      </tr></thead>
+      <tbody id="alimentsTableBody">
+        <tr><td colspan="7" style="color:var(--muted);padding:20px 16px" data-i18n="admin_click">Cliquez sur Rafraîchir pour charger…</td></tr>
+      </tbody>
+    </table>
+  </div>
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script src="translations.js"></script>
+<script src="i18n.js"></script>
+
+<script>
+if (!localStorage.getItem("token")) window.location.href = "index.html";
+
+async function apiFetch(url, options = {}) {
+  const token = localStorage.getItem("token");
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + token,
+      ...(options.headers || {})
+    }
+  });
+  if (res.status === 401) {
+    localStorage.removeItem("token");
+    window.location.href = "index.html";
+    return null;
+  }
+  return res;
+}
+
+function showPanel(name, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('panel' + name.charAt(0).toUpperCase() + name.slice(1)).classList.add('active');
+  if (el) el.classList.add('active');
+  if (name === 'admin') loadUsers();
+  if (name === 'social') loadSocial();
+  if (name === 'stats')  { loadSante(); loadStats(currentPeriode); }
+}
+
+function toast(msg, type = 'success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `show ${type}`;
+  setTimeout(() => { el.className = ''; }, 3000);
+}
+
+function showInlineMsg(id, text, type) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = `msg-inline ${type}`;
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 4000);
+}
+
+function logout() {
+  localStorage.removeItem('token');
+  window.location.href = 'index.html';
+}
+
+async function loadProfil() {
+  try {
+    const res  = await apiFetch("http://127.0.0.1:5000/me");
+    const data = await res.json();
+    document.getElementById("profil_name").value   = data.name   || "";
+    document.getElementById("profil_age").value    = data.age    || "";
+    document.getElementById("profil_taille").value = data.taille || "";
+    document.getElementById("profil_poids").value  = data.poids  || "";
+    document.getElementById("profil_regime").value = data.regime || "standard";
+    document.getElementById("langue").value        = data.langue || "fr";
+    document.getElementById("sidebarName").textContent   = data.name || "Utilisateur";
+    document.getElementById("sidebarRole").textContent   = data.role || "normal";
+    document.getElementById("avatarInitial").textContent = (data.name || "?")[0].toUpperCase();
+    setLang(data.langue || "fr");
+    if (data.role === "admin" || data.role === "dev") {
+      document.getElementById("adminNav").style.display    = "flex";
+      document.getElementById("alimentsNav").style.display = "flex";
+    }
+  } catch(e) { console.error(e); }
+}
+
+async function updateProfil() {
+  try {
+    const res = await apiFetch("http://127.0.0.1:5000/me", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name:   document.getElementById("profil_name").value,
+        age:    parseInt(document.getElementById("profil_age").value)      || null,
+        taille: parseFloat(document.getElementById("profil_taille").value) || null,
+        poids:  parseFloat(document.getElementById("profil_poids").value)  || null,
+        regime: document.getElementById("profil_regime").value
+      })
+    });
+    if (res.ok) { toast(t('toast_profil_maj')); loadProfil(); }
+    else { const d = await res.json(); showInlineMsg("profilMsg", d.error || "Erreur", "error"); }
+  } catch(e) { toast(t('toast_erreur_reseau'), "error"); }
+}
+
+async function changeLang(lang) {
+  setLang(lang);
+  await apiFetch("http://127.0.0.1:5000/me", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ langue: lang })
+  });
+}
+
+let currentPage = 1;
+
+async function getRecettes(page = 1) {
+  currentPage = page;
+  const container = document.getElementById("recettesContainer");
+  container.innerHTML = `<div class="empty"><span class="spinner"></span> ${t('chargement')}</div>`;
+  try {
+    const res = await apiFetch(`http://127.0.0.1:5000/recettes?page=${page}&per_page=6`, {
+      headers: { "Content-Type": "application/json" }
+    });
+    const data = await res.json();
+    container.innerHTML = "";
+    if (data.recettes.length === 0 && page === 1) {
+      container.innerHTML = `<div class="empty"><div class="empty-icon">🍽</div><p>${t('empty_recettes')}</p></div>`;
+      return;
+    }
+    const grid = document.createElement("div");
+    grid.className = "recettes-grid";
+    data.recettes.forEach((r, i) => {
+      const card = document.createElement("div");
+      card.className = "recette-card";
+      card.style.animationDelay = `${i * 0.05}s`;
+      card.innerHTML = `
+        <h3>${r.title}</h3>
+        <p class="recette-instructions">${r.instructions || ""}</p>
+        <div class="nutrition-grid">
+          <div class="nutrition-item calories-item"><div class="nutrition-label">Calories</div><div class="nutrition-value">${r.nutrition.calories} <span>kcal</span></div></div>
+          <div class="nutrition-item"><div class="nutrition-label">${t('label_proteines')}</div><div class="nutrition-value">${r.nutrition.proteines} <span>g</span></div></div>
+          <div class="nutrition-item"><div class="nutrition-label">${t('label_glucides')}</div><div class="nutrition-value">${r.nutrition.glucides} <span>g</span></div></div>
+          <div class="nutrition-item"><div class="nutrition-label">${t('label_lipides')}</div><div class="nutrition-value">${r.nutrition.lipides} <span>g</span></div></div>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:8px">
+          <button class="btn btn-ghost" onclick="partagerRecette(${r.recette_id}, '${r.title.replace(/'/g, "\\'")}')" style="flex:1; padding:8px; font-size:13px">📤 ${t('btn_partager')}</button>
+          <button class="btn btn-danger" onclick="deleteRecette(${r.recette_id})" style="flex:1">🗑 ${t('btn_supprimer')}</button>
+          <button class="btn btn-ghost" onclick="ajouterAuxStats(${r.recette_id})" style="flex:1; padding:8px; font-size:13px">📊 Ajouter aux Stats</button>
+        </div>`;
+      grid.appendChild(card);
+    });
+    container.appendChild(grid);
+    if (data.pages > 1) {
+      const pagination = document.createElement("div");
+      pagination.style.cssText = "display:flex; align-items:center; justify-content:center; gap:12px; margin-top:32px;";
+      pagination.innerHTML = `
+        <button class="btn btn-ghost" onclick="getRecettes(${page - 1})" ${!data.has_prev ? 'disabled style="opacity:0.3;cursor:not-allowed"' : ''}>← ${t('btn_precedent')}</button>
+        <span style="color:var(--muted); font-size:14px">${t('page')} ${data.page} / ${data.pages} <span style="color:var(--muted2)">(${data.total} ${t('recettes_count')})</span></span>
+        <button class="btn btn-ghost" onclick="getRecettes(${page + 1})" ${!data.has_next ? 'disabled style="opacity:0.3;cursor:not-allowed"' : ''}>${t('btn_suivant')} →</button>`;
+      container.appendChild(pagination);
+    }
+  } catch(e) {
+    container.innerHTML = `<div class="empty"><p>${t('erreur_chargement')}</p></div>`;
+  }
+}
+
+async function deleteRecette(id) {
+  if (!confirm(t('confirm_supprimer_recette'))) return;
+  try {
+    const res = await apiFetch(`http://127.0.0.1:5000/recettes/${id}`, { method: "DELETE" });
+    if (res.ok) { toast(t('toast_recette_supprimee')); getRecettes(currentPage); }
+    else toast(t('toast_erreur_supprimer'), "error");
+  } catch(e) { toast(t('toast_erreur_reseau'), "error"); }
+}
+
+async function generateRecette() {
+  const btn = document.getElementById("generateBtn");
+  btn.innerHTML = `<span class="spinner"></span> ${t('generating')}`;
+  btn.disabled = true;
+  try {
+    const res = await apiFetch("http://127.0.0.1:5000/generate_recette", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ingredients: document.getElementById("ingredients").value })
+    });
+    const data = await res.json();
+    document.getElementById("titleIA").textContent        = data.title || "Sans titre";
+    document.getElementById("instructionsIA").textContent = data.instructions || "";
+    document.getElementById("caloriesIA").textContent     = data.nutrition?.calories  || 0;
+    document.getElementById("proteinesIA").textContent    = data.nutrition?.proteines || 0;
+    document.getElementById("glucidesIA").textContent     = data.nutrition?.glucides  || 0;
+    document.getElementById("lipidesIA").textContent      = data.nutrition?.lipides   || 0;
+    document.getElementById("resultBox").style.display    = "block";
+    toast(t('toast_recette_generee'));
+  } catch(e) { toast(t('toast_erreur_generer'), "error"); }
+  finally { btn.innerHTML = t('generate_btn'); btn.disabled = false; }
+}
+
+// Variables stats
+let statsChartInstance = null;
+let currentPeriode = 'semaine';
+
+// ── SANTÉ : IMC + CALORIES ──
+async function loadSante() {
+  try {
+    const res  = await apiFetch("http://127.0.0.1:5000/sante");
+    const data = await res.json();
+
+    if (data.imc) {
+      document.getElementById("imcValeur").textContent    = data.imc;
+      document.getElementById("imcCategorie").textContent = data.imc_categorie;
+
+    
+
+      // Couleur selon catégorie
+      const colors = { "Poids normal": "var(--accent)", "Insuffisance pondérale": "#64b4ff", "Surpoids": "#ffb432", "Obésité modérée": "#ff7755", "Obésité sévère": "var(--danger)" };
+      document.getElementById("imcValeur").style.color = colors[data.imc_categorie] || "var(--accent)";
+
+      // Curseur sur la barre (IMC de 16 à 40)
+      const cursor = document.getElementById("imcCursor");
+      const pct = Math.min(Math.max((data.imc - 16) / (40 - 16) * 100, 0), 100);
+      cursor.style.left = pct + "%";
+      cursor.style.display = "block";
+    } else {
+      document.getElementById("imcManque").style.display = "block";
+      document.getElementById("imcDisplay").style.display = "none";
+    }
+
+    if (data.proteines_min) {
+    document.getElementById("protRecommandees").textContent = `${data.proteines_min} – ${data.proteines_max} g`;
+    }
+
+    if (data.calories_maintenance) {
+      document.getElementById("calMaintien").textContent = data.calories_maintenance + " kcal";
+      document.getElementById("calPerte").textContent    = data.calories_perte + " kcal";
+      document.getElementById("calPrise").textContent    = data.calories_prise + " kcal";
+    } else {
+      document.getElementById("caloriesManque").style.display = "block";
+    }
+  } catch(e) { console.error(e); }
+}
+
+// ── STATS NUTRITION ──
+async function ajouterAuxStats(recetteId) {
+  try {
+    const res = await apiFetch(`http://127.0.0.1:5000/recettes/${recetteId}/ajouter-stats`, {
+      method: "POST",
+      headers: {}
+    });
+    if (res.ok) toast(t('toast_ajoute_stats'));
+    else toast("Erreur", "error");
+  } catch(e) { toast(t('toast_erreur_reseau'), "error"); }
+}
+
+async function loadStats(periode = 'semaine') {
+  currentPeriode = periode;
+
+  // Boutons actifs
+  document.getElementById("btnSemaine").className = periode === 'semaine' ? 'btn btn-primary' : 'btn btn-ghost';
+  document.getElementById("btnMois").className    = periode === 'mois'    ? 'btn btn-primary' : 'btn btn-ghost';
+  document.getElementById("btnSemaine").style.cssText = periode === 'semaine' ? 'padding:8px 16px;font-size:13px' : 'padding:8px 16px;font-size:13px';
+
+  try {
+    const res  = await apiFetch(`http://127.0.0.1:5000/stats/nutrition?periode=${periode}`);
+    const data = await res.json();
+
+    // Moyennes
+    document.getElementById("statCalMoy").textContent  = data.moyennes.calories;
+    document.getElementById("statProtMoy").textContent = data.moyennes.proteines;
+    document.getElementById("statGlucMoy").textContent = data.moyennes.glucides;
+    document.getElementById("statLipMoy").textContent  = data.moyennes.lipides;
+
+    // Sources
+    document.getElementById("statRecCal").textContent   = Math.round(data.recettes.calories);
+    document.getElementById("statRecCount").textContent  = data.recettes.count;
+    document.getElementById("statRepasCal").textContent  = Math.round(data.repas.calories);
+    document.getElementById("statRepasCount").textContent = data.repas.count;
+
+    // Graphique
+    renderStatsChart(data.jours);
+
+    // Repas
+    loadRepas(periode);
+  } catch(e) { console.error(e); }
+}
+
+function renderStatsChart(jours) {
+  const ctx = document.getElementById("statsChart").getContext("2d");
+  if (statsChartInstance) statsChartInstance.destroy();
+
+  statsChartInstance = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: jours.map(j => j.label),
+      datasets: [{
+        label: "Calories",
+        data: jours.map(j => j.calories),
+        backgroundColor: "rgba(200,241,53,0.3)",
+        borderColor: "var(--accent)",  // note: Chart.js ne résout pas les var() — on utilise la valeur fixe
+        borderColor: "#c8f135",
+        borderWidth: 1,
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { labels: { color: "#f0f0f0", font: { family: "DM Sans" } } }
+      },
+      scales: {
+        x: { ticks: { color: "#666" }, grid: { color: "rgba(255,255,255,0.05)" } },
+        y: { ticks: { color: "#c8f135", callback: v => v + " kcal" }, grid: { color: "rgba(255,255,255,0.05)" } }
+      }
+    }
+  });
+}
+
+function switchPeriode(periode) {
+  loadStats(periode);
+}
+
+// ── REPAS MANUELS ──
+async function loadRepas(periode) {
+  try {
+    const res    = await apiFetch(`http://127.0.0.1:5000/repas?periode=${periode}`);
+    const repas  = await res.json();
+    const container = document.getElementById("repasContainer");
+    if (repas.length === 0) {
+      container.innerHTML = `<p style="color:var(--muted);font-size:13px">${t('stats_aucun_repas')}</p>`;
+      return;
+    }
+    container.innerHTML = "";
+    repas.forEach(r => {
+      const div = document.createElement("div");
+      div.style.cssText = "display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--border)";
+      div.innerHTML = `
+        <div>
+          <div style="font-size:14px; font-weight:500">${r.nom} <span style="color:var(--muted); font-size:12px; font-weight:400">${r.date}</span></div>
+          <div style="font-size:12px; color:var(--muted); margin-top:3px">
+            <span style="color:var(--accent)">${r.calories} kcal</span>
+            · P: ${r.proteines}g · G: ${r.glucides}g · L: ${r.lipides}g
+          </div>
+        </div>
+        <button class="btn btn-danger" onclick="deleteRepas(${r.id})" style="padding:6px 12px; font-size:12px">🗑</button>`;
+      container.appendChild(div);
+    });
+  } catch(e) {}
+}
+
+async function addRepas() {
+  const nom = document.getElementById("repas_nom").value.trim();
+  if (!nom) { showInlineMsg("repasMsg", t('erreur_nom_obligatoire'), "error"); return; }
+  try {
+    const res = await apiFetch("http://127.0.0.1:5000/repas", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        nom,
+        date:      document.getElementById("repas_date").value || new Date().toISOString().split('T')[0],
+        calories:  parseFloat(document.getElementById("repas_cal").value)  || 0,
+        proteines: parseFloat(document.getElementById("repas_prot").value) || 0,
+        glucides:  parseFloat(document.getElementById("repas_gluc").value) || 0,
+        lipides:   parseFloat(document.getElementById("repas_lip").value)  || 0
+      })
+    });
+    if (res.ok) {
+      toast(t('toast_mesure_enregistree'));
+      ["repas_nom","repas_cal","repas_prot","repas_gluc","repas_lip"].forEach(id => document.getElementById(id).value = "");
+      loadStats(currentPeriode);
+    } else toast(t('toast_erreur_ajout'), "error");
+  } catch(e) { toast(t('toast_erreur_reseau'), "error"); }
+}
+
+async function deleteRepas(id) {
+  if (!confirm(t('confirm_supprimer_recette'))) return;
+  try {
+    const res = await apiFetch(`http://127.0.0.1:5000/repas/${id}`, { method: "DELETE" });
+    if (res.ok) { toast(t('toast_recette_supprimee')); loadStats(currentPeriode); }
+  } catch(e) {}
+}
+
+async function loadUsers() {
+  const tbody = document.getElementById("usersTableBody");
+  tbody.innerHTML = `<tr><td colspan="4" style="color:var(--muted)"><span class="spinner"></span> ${t('chargement')}</td></tr>`;
+  try {
+    const res = await apiFetch("http://127.0.0.1:5000/admin/users");
+    const users = await res.json();
+    tbody.innerHTML = "";
+    users.forEach(u => {
+      const tr = document.createElement("tr");
+      const canDelete = u.role !== "dev";
+      tr.innerHTML = `
+        <td style="color:var(--muted)">#${u.id}</td>
+        <td>${u.name}</td>
+        <td><span class="role-badge role-${u.role}">${u.role}</span></td>
+        <td>${canDelete
+          ? `<button class="btn btn-danger" onclick="deleteUser(${u.id}, '${u.name}')">🗑 ${t('btn_supprimer')}</button>`
+          : `<span style="color:var(--muted);font-size:12px">${t('protege')}</span>`
+        }</td>`;
+      tbody.appendChild(tr);
+    });
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="4" style="color:var(--danger)">${t('erreur_chargement')}</td></tr>`;
+  }
+}
+
+async function deleteUser(id, name) {
+  if (!confirm(`${t('confirm_supprimer_user')} ${name} ?`)) return;
+  try {
+    const res = await apiFetch(`http://127.0.0.1:5000/admin/users/${id}`, { method: "DELETE" });
+    const data = await res.json();
+    if (res.ok) { toast(`${t('toast_compte_supprime')} ${name}`); loadUsers(); }
+    else toast(data.error || t('toast_erreur_supprimer'), "error");
+  } catch(e) { toast(t('toast_erreur_reseau'), "error"); }
+}
+
+async function updateRole() {
+  const userId = document.getElementById("targetUserId").value;
+  const role   = document.getElementById("targetRole").value;
+  if (!userId) { showInlineMsg("roleMsg", t('erreur_id_user'), "error"); return; }
+  try {
+    const res = await apiFetch(`http://127.0.0.1:5000/admin/users/${userId}/role`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role })
+    });
+    const data = await res.json();
+    if (res.ok) { toast(t('toast_role_maj')); loadUsers(); }
+    else showInlineMsg("roleMsg", data.error || "Erreur", "error");
+  } catch(e) { toast(t('toast_erreur_reseau'), "error"); }
+}
+
+async function loadAliments() {
+  const tbody = document.getElementById("alimentsTableBody");
+  tbody.innerHTML = `<tr><td colspan="7" style="color:var(--muted)"><span class="spinner"></span> ${t('chargement')}</td></tr>`;
+  try {
+    const res = await apiFetch("http://127.0.0.1:5000/aliments");
+    const aliments = await res.json();
+    tbody.innerHTML = "";
+    aliments.forEach(a => {
+      const tr = document.createElement("tr");
+      tr.id = `aliment-row-${a.id}`;
+      tr.innerHTML = `
+        <td style="color:var(--muted)">#${a.id}</td>
+        <td><input value="${a.name}" onchange="markDirty(${a.id})" id="a_name_${a.id}" style="background:transparent;border:none;color:var(--text);width:100%;outline:none" onfocus="this.style.borderBottom='1px solid var(--accent)'"></td>
+        <td><input value="${a.calories}" onchange="markDirty(${a.id})" id="a_cal_${a.id}" type="number" style="background:transparent;border:none;color:var(--text);width:70px;outline:none" onfocus="this.style.borderBottom='1px solid var(--accent)'"></td>
+        <td><input value="${a.proteines}" onchange="markDirty(${a.id})" id="a_prot_${a.id}" type="number" style="background:transparent;border:none;color:var(--text);width:70px;outline:none" onfocus="this.style.borderBottom='1px solid var(--accent)'"></td>
+        <td><input value="${a.glucides}" onchange="markDirty(${a.id})" id="a_gluc_${a.id}" type="number" style="background:transparent;border:none;color:var(--text);width:70px;outline:none" onfocus="this.style.borderBottom='1px solid var(--accent)'"></td>
+        <td><input value="${a.lipides}" onchange="markDirty(${a.id})" id="a_lip_${a.id}" type="number" style="background:transparent;border:none;color:var(--text);width:70px;outline:none" onfocus="this.style.borderBottom='1px solid var(--accent)'"></td>
+        <td style="display:flex;gap:8px">
+          <button class="btn btn-ghost" id="save_${a.id}" onclick="saveAliment(${a.id})" style="display:none;padding:6px 12px;font-size:12px">💾</button>
+          <button class="btn btn-danger" onclick="deleteAliment(${a.id}, '${a.name}')">🗑</button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="7" style="color:var(--danger)">${t('erreur_chargement')}</td></tr>`;
+  }
+}
+
+function markDirty(id) { document.getElementById(`save_${id}`).style.display = "inline-block"; }
+
+async function saveAliment(id) {
+  try {
+    const res = await apiFetch(`http://127.0.0.1:5000/aliments/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name:      document.getElementById(`a_name_${id}`).value,
+        calories:  parseFloat(document.getElementById(`a_cal_${id}`).value),
+        proteines: parseFloat(document.getElementById(`a_prot_${id}`).value),
+        glucides:  parseFloat(document.getElementById(`a_gluc_${id}`).value),
+        lipides:   parseFloat(document.getElementById(`a_lip_${id}`).value)
+      })
+    });
+    if (res.ok) { toast(t('toast_aliment_maj')); document.getElementById(`save_${id}`).style.display = "none"; }
+    else toast(t('toast_erreur_maj'), "error");
+  } catch(e) { toast(t('toast_erreur_reseau'), "error"); }
+}
+
+async function deleteAliment(id, name) {
+  if (!confirm(`${t('confirm_supprimer_aliment')} "${name}" ?`)) return;
+  try {
+    const res = await apiFetch(`http://127.0.0.1:5000/aliments/${id}`, { method: "DELETE" });
+    if (res.ok) { toast(`"${name}" ${t('toast_supprime')}`); loadAliments(); }
+    else toast(t('toast_erreur_supprimer'), "error");
+  } catch(e) { toast(t('toast_erreur_reseau'), "error"); }
+}
+
+async function addAliment() {
+  const name = document.getElementById("new_name").value.trim();
+  if (!name) { showInlineMsg("alimentMsg", t('erreur_nom_obligatoire'), "error"); return; }
+  try {
+    const res = await apiFetch("http://127.0.0.1:5000/aliments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name,
+        calories:  parseFloat(document.getElementById("new_cal").value)  || 0,
+        proteines: parseFloat(document.getElementById("new_prot").value) || 0,
+        glucides:  parseFloat(document.getElementById("new_gluc").value) || 0,
+        lipides:   parseFloat(document.getElementById("new_lip").value)  || 0
+      })
+    });
+    if (res.ok) {
+      toast(t('toast_aliment_ajoute'));
+      ["new_name","new_cal","new_prot","new_gluc","new_lip"].forEach(id => document.getElementById(id).value = "");
+      loadAliments();
+    } else toast(t('toast_erreur_ajout'), "error");
+  } catch(e) { toast(t('toast_erreur_reseau'), "error"); }
+}
+
+let weightChartInstance = null;
+
+async function loadMesures() {
+  try {
+    const res = await apiFetch("http://127.0.0.1:5000/mesures");
+    const mesures = await res.json();
+    renderWeightChart(mesures);
+  } catch(e) { console.error(e); }
+}
+
+function renderWeightChart(mesures) {
+  const ctx = document.getElementById("weightChart").getContext("2d");
+  if (weightChartInstance) weightChartInstance.destroy();
+  const labels = mesures.map(m => m.date);
+  const poids  = mesures.map(m => m.poids);
+  const mg     = mesures.map(m => m.masse_grasse);
+  const hasMG  = mg.some(v => v !== null);
+  const datasets = [{
+    label: t('chart_poids'), data: poids,
+    borderColor: "#c8f135", backgroundColor: "rgba(200,241,53,0.1)",
+    borderWidth: 2, pointBackgroundColor: "#c8f135", pointRadius: 4, tension: 0.4, fill: true, yAxisID: "y"
+  }];
+  if (hasMG) {
+    datasets.push({
+      label: t('chart_mg'), data: mg,
+      borderColor: "#64b4ff", backgroundColor: "rgba(100,180,255,0.1)",
+      borderWidth: 2, pointBackgroundColor: "#64b4ff", pointRadius: 4, tension: 0.4, fill: false, yAxisID: "y2"
+    });
+  }
+  weightChartInstance = new Chart(ctx, {
+    type: "line", data: { labels, datasets },
+    options: {
+      responsive: true, interaction: { mode: "index", intersect: false },
+      plugins: { legend: { labels: { color: "#f0f0f0", font: { family: "DM Sans" } } } },
+      scales: {
+        x: { ticks: { color: "#666" }, grid: { color: "rgba(255,255,255,0.05)" } },
+        y: { ticks: { color: "#c8f135", callback: v => v + " kg" }, grid: { color: "rgba(255,255,255,0.05)" } },
+        ...(hasMG ? { y2: { position: "right", ticks: { color: "#64b4ff", callback: v => v + " %" }, grid: { drawOnChartArea: false } } } : {})
+      }
+    }
+  });
+}
+
+async function addMesure() {
+  const dateVal = document.getElementById("mesure_date").value;
+  const poidsVal = document.getElementById("mesure_poids").value;
+  if (!dateVal || !poidsVal) { showInlineMsg("mesureMsg", t('erreur_date_poids'), "error"); return; }
+  try {
+    const res = await apiFetch("http://127.0.0.1:5000/mesures", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date: dateVal, poids: parseFloat(poidsVal), masse_grasse: parseFloat(document.getElementById("mesure_mg").value) || null })
+    });
+    if (res.ok) {
+      toast(t('toast_mesure_enregistree'));
+      document.getElementById("mesure_poids").value = "";
+      document.getElementById("mesure_mg").value    = "";
+      loadMesures();
+    } else { showInlineMsg("mesureMsg", t('toast_erreur_enregistrement'), "error"); }
+  } catch(e) { toast(t('toast_erreur_reseau'), "error"); }
+}
+
+let chatAmiId = null;
+let chatInterval = null;
+
+async function loadNotifications() {
+  if (!localStorage.getItem("token")) return;
+  try {
+    const res  = await apiFetch("http://127.0.0.1:5000/notifications");
+    const data = await res.json();
+    const badge = document.getElementById("notifBadge");
+    if (data.total > 0) { badge.textContent = data.total; badge.style.display = "inline-block"; }
+    else { badge.style.display = "none"; }
+  } catch(e) {}
+}
+
+async function searchUsers() {
+  const q = document.getElementById("searchUser").value.trim();
+  const container = document.getElementById("searchResults");
+  if (q.length < 2) { container.innerHTML = ""; return; }
+  try {
+    const res   = await apiFetch(`http://127.0.0.1:5000/users/search?q=${encodeURIComponent(q)}`);
+    const users = await res.json();
+    container.innerHTML = "";
+    if (users.length === 0) { container.innerHTML = `<p style="color:var(--muted);font-size:13px">${t('aucun_resultat')}</p>`; return; }
+    users.forEach(u => {
+      const div = document.createElement("div");
+      div.style.cssText = "display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border)";
+      div.innerHTML = `
+        <div>
+          <div style="font-size:14px">${u.name}</div>
+          <div style="font-size:12px; color:var(--muted)">@${u.username}</div>
+        </div>
+        <button class="btn btn-ghost" onclick="envoyerDemande(${u.id})" style="padding:6px 14px; font-size:12px">${t('btn_ajouter')}</button>`;
+      container.appendChild(div);
+    });
+  } catch(e) {}
+}
+
+async function envoyerDemande(receveurId) {
+  try {
+    const res = await apiFetch("http://127.0.0.1:5000/amis/demande", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ receveur_id: receveurId })
+    });
+    const data = await res.json();
+    if (res.ok) toast(t('toast_demande_envoyee'));
+    else toast(data.error || "Erreur", "error");
+  } catch(e) { toast(t('toast_erreur_reseau'), "error"); }
+}
+
+async function loadDemandes() {
+  try {
+    const res      = await apiFetch("http://127.0.0.1:5000/amis/demandes");
+    const demandes = await res.json();
+    const container = document.getElementById("demandesContainer");
+    container.innerHTML = "";
+    if (demandes.length === 0) { container.innerHTML = `<p style="color:var(--muted);font-size:13px">${t('social_aucune_demande')}</p>`; return; }
+    demandes.forEach(d => {
+      const div = document.createElement("div");
+      div.style.cssText = "display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border)";
+      div.innerHTML = `
+        <span style="font-size:14px">${d.name}</span>
+        <div style="display:flex; gap:8px">
+          <button class="btn btn-primary" onclick="repondre(${d.amitie_id}, 'accepte')" style="padding:6px 12px; font-size:12px">✓</button>
+          <button class="btn btn-danger"  onclick="repondre(${d.amitie_id}, 'refuse')"  style="padding:6px 12px; font-size:12px">✕</button>
+        </div>`;
+      container.appendChild(div);
+    });
+  } catch(e) {}
+}
+
+async function repondre(amitieId, statut) {
+  try {
+    const res = await apiFetch(`http://127.0.0.1:5000/amis/demande/${amitieId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ statut })
+    });
+    if (res.ok) {
+      toast(statut === 'accepte' ? t('toast_ami_ajoute') : t('toast_demande_refusee'));
+      loadDemandes(); loadAmis(); loadNotifications();
+    }
+  } catch(e) {}
+}
+
+async function loadAmis() {
+  try {
+    const res  = await apiFetch("http://127.0.0.1:5000/amis");
+    const amis = await res.json();
+    const container = document.getElementById("amisContainer");
+    container.innerHTML = "";
+    if (amis.length === 0) { container.innerHTML = `<p style="color:var(--muted);font-size:13px">${t('social_aucun_ami')}</p>`; return; }
+    amis.forEach(a => {
+      const div = document.createElement("div");
+      div.style.cssText = "display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border)";
+      const badge = a.messages_non_lus > 0
+        ? `<span style="background:var(--accent);color:var(--black);border-radius:20px;font-size:11px;padding:2px 7px;margin-left:8px;font-family:'Bebas Neue',sans-serif;">${a.messages_non_lus}</span>`
+        : '';
+      div.innerHTML = `
+        <span style="font-size:14px">${a.name}${badge}</span>
+        <div style="display:flex; gap:8px">
+          <button class="btn btn-ghost" onclick="openChat(${a.id}, '${a.name}')" style="padding:6px 12px; font-size:12px">💬</button>
+          <button class="btn btn-danger" onclick="supprimerAmi(${a.amitie_id})" style="padding:6px 12px; font-size:12px">✕</button>
+        </div>`;
+      container.appendChild(div);
+    });
+  } catch(e) {}
+}
+
+async function supprimerAmi(amitieId) {
+  if (!confirm(t('confirm_supprimer_ami'))) return;
+  try {
+    const res = await apiFetch(`http://127.0.0.1:5000/amis/${amitieId}`, { method: "DELETE" });
+    if (res.ok) { toast(t('toast_ami_supprime')); loadAmis(); }
+  } catch(e) {}
+}
+
+async function loadRecettesRecues() {
+  try {
+    const res      = await apiFetch("http://127.0.0.1:5000/recettes/recues");
+    const recettes = await res.json();
+    const container = document.getElementById("recettesRecuesContainer");
+    container.innerHTML = "";
+    if (recettes.length === 0) { container.innerHTML = `<p style="color:var(--muted);font-size:13px">${t('social_aucune_recette')}</p>`; return; }
+    recettes.forEach(r => {
+      const div = document.createElement("div");
+      div.style.cssText = "display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--border)";
+      div.innerHTML = `
+        <div>
+          <div style="font-size:14px; font-weight:500">${r.title} ${!r.lu ? `<span style="background:var(--accent);color:var(--black);border-radius:10px;font-size:10px;padding:2px 6px;margin-left:6px">NEW</span>` : ''}</div>
+          <div style="font-size:12px; color:var(--muted); margin-top:2px">${t('envoye_par')} ${r.envoyeur}</div>
+        </div>`;
+      container.appendChild(div);
+    });
+
+    // Marquer comme lues après affichage
+    await apiFetch("http://127.0.0.1:5000/recettes/recues/lues", {
+      method: "PATCH",
+      headers: {}
+    });
+    loadNotifications();
+  } catch(e) {}
+}
+
+let recetteAPartager = null;
+
+async function partagerRecette(recetteId, recetteTitle) {
+  recetteAPartager = recetteId;
+  document.getElementById("modaleRecetteTitle").textContent = recetteTitle;
+  const amisRes = await apiFetch("http://127.0.0.1:5000/amis");
+  if (!amisRes) return;
+  const amis = await amisRes.json();
+  const liste = document.getElementById("modaleAmisList");
+  liste.innerHTML = "";
+  if (amis.length === 0) {
+    liste.innerHTML = `<p style="color:var(--muted); font-size:13px">${t('social_aucun_ami')}</p>`;
+  } else {
+    amis.forEach(a => {
+      const div = document.createElement("div");
+      div.style.cssText = "display:flex; align-items:center; justify-content:space-between; padding:12px 16px; background:var(--surface2); border:1px solid var(--border); border-radius:8px;";
+      div.innerHTML = `
+        <span style="font-size:14px">${a.name}</span>
+        <button class="btn btn-ghost" onclick="confirmerPartage(${a.id}, '${a.name}')" style="padding:6px 14px; font-size:12px">📤 ${t('btn_envoyer')}</button>`;
+      liste.appendChild(div);
+    });
+  }
+  document.getElementById("modalePartage").style.display = "flex";
+}
+
+async function confirmerPartage(amiId, amiName) {
+  const res = await apiFetch("http://127.0.0.1:5000/recettes/partager", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ recette_id: recetteAPartager, receveur_id: amiId })
+  });
+  if (res.ok) { toast(`${t('toast_recette_partagee')} ${amiName} !`); fermerModalePartage(); }
+  else { toast(t('toast_erreur_partage'), "error"); }
+}
+
+function fermerModalePartage() {
+  document.getElementById("modalePartage").style.display = "none";
+  recetteAPartager = null;
+}
+
+function openChat(amiId, amiName) {
+  chatAmiId = amiId;
+  document.getElementById("chatAmiName").textContent = amiName;
+  document.getElementById("chatBox").style.display   = "block";
+  loadMessages();
+  if (chatInterval) clearInterval(chatInterval);
+  chatInterval = setInterval(loadMessages, 3000);
+  document.getElementById("chatBox").scrollIntoView({ behavior: 'smooth' });
+}
+
+function closeChat() {
+  document.getElementById("chatBox").style.display = "none";
+  if (chatInterval) clearInterval(chatInterval);
+  chatAmiId = null;
+}
+
+async function loadMessages() {
+  if (!chatAmiId) return;
+  try {
+    const res      = await apiFetch(`http://127.0.0.1:5000/messages/${chatAmiId}`);
+    const messages = await res.json();
+    const container = document.getElementById("messagesContainer");
+    const myId      = parseInt(JSON.parse(atob(token.split('.')[1])).sub);
+    container.innerHTML = "";
+    messages.forEach(m => {
+      const isMine = m.envoyeur_id === myId;
+      const div    = document.createElement("div");
+      div.style.cssText = `align-self:${isMine ? 'flex-end' : 'flex-start'}; background:${isMine ? 'var(--accent-dim)' : 'var(--surface3)'}; border:1px solid ${isMine ? 'rgba(200,241,53,0.2)' : 'var(--border)'}; border-radius:${isMine ? '12px 12px 2px 12px' : '12px 12px 12px 2px'}; padding:10px 14px; max-width:75%; font-size:13px; color:var(--text)`;
+      div.textContent = m.contenu;
+      container.appendChild(div);
+    });
+    container.scrollTop = container.scrollHeight;
+    loadNotifications();
+  } catch(e) {}
+}
+
+async function envoyerMessage() {
+  const contenu = document.getElementById("messageInput").value.trim();
+  if (!contenu || !chatAmiId) return;
+  try {
+    await apiFetch("http://127.0.0.1:5000/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ receveur_id: chatAmiId, contenu })
+    });
+    document.getElementById("messageInput").value = "";
+    loadMessages();
+  } catch(e) {}
+}
+
+async function loadSocial() {
+  await Promise.all([loadDemandes(), loadAmis(), loadRecettesRecues()]);
+}
+
+window.onload = () => {
+  loadProfil();
+  getRecettes();
+  loadMesures();
+  loadNotifications();
+  loadSante();
+  setInterval(loadNotifications, 30000);
+};
+</script>
+</body>
+</html>

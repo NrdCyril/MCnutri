@@ -1,0 +1,7 @@
+flask
+flask-cors
+flask-jwt-extended
+flask-bcrypt
+flask-sqlalchemy
+flask-mail
+anthropic
