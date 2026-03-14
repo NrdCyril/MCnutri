@@ -13,8 +13,6 @@ from .routes.stats import stats_bp
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
-    app.config["JWT_SECRET_KEY"] = "une_clef_super_longue_au_moins_32_chars!"
 
     db.init_app(app)
     bcrypt.init_app(app)
