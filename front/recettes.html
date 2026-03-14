@@ -137,6 +137,15 @@
       #toast { bottom: 80px; right: 16px; left: 16px; text-align: center; }
     }
 
+    #scannerViewport video,
+    #scannerViewport canvas {
+      width: 100% !important;
+      height: 280px !important;
+      object-fit: cover !important;
+      position: relative !important;
+      display: block !important;
+    }
+
   </style>
 </head>
 <body>
@@ -568,7 +577,7 @@
         <h3 style="font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:2px; color:var(--accent)">Scanner un produit</h3>
         <button onclick="fermerScanner()" style="background:none; border:none; color:var(--muted); font-size:24px; cursor:pointer">✕</button>
       </div>
-      <div id="scannerViewport" style="position:relative; width:100%; border-radius:12px; overflow:hidden; background:#000; min-height:280px">
+      <div id="scannerViewport" style="position:relative; width:100%; height:280px; border-radius:12px; overflow:hidden; background:#000;">
         <div id="scannerLoading" style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:12px; color:var(--muted); font-size:13px">
           <div class="spinner"></div>
           <span>Initialisation caméra…</span>
