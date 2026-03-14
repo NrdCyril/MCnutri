@@ -7,3 +7,4 @@ flask-mail
 anthropic
 gunicorn
 requests
+python-dotenv
